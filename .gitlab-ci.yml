@@ -1,0 +1,41 @@
+image: docker:latest
+
+stages:
+- build
+- test
+- release
+
+variables:
+  CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+  CONTAINER_LATEST_IMAGE: $CI_REGISTRY_IMAGE:latest
+
+before_script:
+  - echo "$CI_JOB_TOKEN" | docker login -u gitlab-ci-token --password-stdin "$CI_REGISTRY"
+
+build:
+  stage: build
+  script:
+    - docker build . --pull -t "$CONTAINER_TEST_IMAGE" --build-arg FROM_PREFIX="$CI_REGISTRY/docker" --network host --build-arg FTP_PROXY="$BUILD_PROXY" --build-arg HTTP_PROXY="$BUILD_PROXY" --build-arg HTTPS_PROXY="$BUILD_PROXY"
+    - docker push "$CONTAINER_TEST_IMAGE"
+
+test:
+  stage: test
+  script:
+    - docker pull "$CONTAINER_TEST_IMAGE"
+    - docker run --entrypoint=/bin/test-entrypoint.sh "$CONTAINER_TEST_IMAGE"
+
+release:
+  stage: release
+  only:
+    - master
+  script:
+    - echo $DOCKERHUB_PASSWORD | docker login -u "$DOCKERHUB_USER" --password-stdin
+
+    - docker pull "$CONTAINER_TEST_IMAGE"
+
+    - docker tag "$CONTAINER_TEST_IMAGE" "$CONTAINER_LATEST_IMAGE"
+    - docker tag "$CONTAINER_TEST_IMAGE" "${DOCKERHUB_USER}/monorepo:flexget"
+
+    - docker push "$CONTAINER_LATEST_IMAGE"
+    - docker push "${DOCKERHUB_USER}/monorepo:flexget"
+

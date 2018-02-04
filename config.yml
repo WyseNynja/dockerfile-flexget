@@ -1,0 +1,6 @@
+tasks:
+  task name:
+    accept_all: yes
+    rss: https://tails.boum.org/torrents/rss/index.rss
+    download: /home/abc/watch/torrent/
+    verify_ssl_certificates: yes
