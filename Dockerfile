@@ -3,8 +3,7 @@ FROM gitlab.stytt.com:5001/docker/python3/ubuntu
 
 ENTRYPOINT ["/entrypoint.sh"]
 
-RUN {
-    set -eux; \
+RUN { set -eux; \
 	\
 	docker-install locales; \
     dpkg-reconfigure locales; \
